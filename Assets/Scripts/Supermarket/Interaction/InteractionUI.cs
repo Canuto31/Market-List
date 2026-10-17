@@ -11,23 +11,27 @@ public class InteractionUI : MonoBehaviour
         HideInteraction();
     }
 
-    public void ShowInteraction(string message = "[E]")
+    
+    private string currentMessage = string.Empty;
+
+    public void ShowInteraction(string message)
     {
         if (interactionPrompt == null)
-        {
-            Debug.LogError(
-                "[UI] InteractionPrompt no está asignado."
-            );
             return;
-        }
+
+        bool isVisible = interactionPrompt.gameObject.activeSelf;
+
+        // Si ya está visible y muestra el mismo mensaje,
+        // no necesitamos actualizar nada.
+        if (isVisible && currentMessage == message)
+            return;
+
+        currentMessage = message;
 
         interactionPrompt.text = message;
         interactionPrompt.gameObject.SetActive(true);
 
-        Debug.Log(
-            $"[UI] Mostrando: {message} | " +
-            $"Activo: {interactionPrompt.gameObject.activeInHierarchy}"
-        );
+        Debug.Log($"[UI] Mostrando: {message}", this);
     }
 
     public void HideInteraction()
@@ -35,6 +39,14 @@ public class InteractionUI : MonoBehaviour
         if (interactionPrompt == null)
             return;
 
+        // Si ya está oculto, no repetimos la operación.
+        if (!interactionPrompt.gameObject.activeSelf)
+            return;
+
         interactionPrompt.gameObject.SetActive(false);
+        currentMessage = string.Empty;
+
+        Debug.Log("[UI] Interacción ocultada", this);
     }
+
 }

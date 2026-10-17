@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random;
+using System;
 
 public class ShelfProductSpawner : MonoBehaviour
 {
@@ -28,6 +29,8 @@ public class ShelfProductSpawner : MonoBehaviour
     private bool generateOnStart = true;
 
     private readonly List<GameObject> spawnedProducts = new();
+    public IReadOnlyList<GameObject> SpawnedProducts => spawnedProducts;
+    public event Action<ShelfProductSpawner> OnGenerationCompleted;
 
     private readonly List<OccupiedSpot> occupiedSpots = new();
 
@@ -46,6 +49,7 @@ public class ShelfProductSpawner : MonoBehaviour
     }
 
     [ContextMenu("Generate Products")]
+    [ContextMenu("Generate Products")]
     public void GenerateProducts()
     {
         ClearProducts();
@@ -58,6 +62,8 @@ public class ShelfProductSpawner : MonoBehaviour
 
             GenerateSection(configuration);
         }
+
+        OnGenerationCompleted?.Invoke(this);
     }
 
     private void GenerateSection(

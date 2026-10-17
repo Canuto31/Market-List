@@ -19,6 +19,10 @@ public class PlayerProductInteractor : MonoBehaviour
     [SerializeField] private bool showDebug = false;
 
     private ProductInstance currentProduct;
+    
+    [Header("Shopping Cart")]
+    [SerializeField]
+    private ShoppingCartController shoppingCart;
 
     private void Awake()
     {
@@ -108,22 +112,44 @@ public class PlayerProductInteractor : MonoBehaviour
         }
     }
 
+    
     private void HandleInteraction()
     {
-        // Actualizar detección al presionar E.
         DetectProduct();
 
         if (currentProduct == null)
             return;
 
-        bool collected = currentProduct.TryCollect();
+        ProductInstance product = currentProduct;
 
-        if (collected)
+        if (product.CurrentState == productState.Blocked)
+        {
+            product.TryCollect();
+            return;
+        }
+
+        if (product.CurrentState != productState.Available)
+            return;
+
+        if (shoppingCart == null)
+        {
+            Debug.LogWarning(
+                "[INTERACTION] ShoppingCart not assigned.",
+                this
+            );
+            return;
+        }
+
+        if (!shoppingCart.TryAddProduct(product.Definition))
+            return;
+
+        if (product.TryCollect())
         {
             currentProduct = null;
             interactionUI?.HideInteraction();
         }
     }
+
 
     private void OnDrawGizmosSelected()
     {
