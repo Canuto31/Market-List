@@ -205,6 +205,18 @@ public class ShelfProductSpawner : MonoBehaviour
             rotation,
             transform
         );
+        
+        // Agregar el componente de interacción.
+        ProductInstance productInstance = instance.GetComponent<ProductInstance>();
+
+        if (productInstance == null)
+        {
+            productInstance = instance.AddComponent<ProductInstance>();
+        }
+
+        // Inicialmente todos los productos
+        // estarán disponibles.
+        productInstance.Initialize(product, productState.Available);
 
         spawnedProducts.Add(instance);
 

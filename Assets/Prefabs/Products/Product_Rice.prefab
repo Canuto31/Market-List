@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 4690764647629788960}
   - component: {fileID: 6426759752839364379}
   - component: {fileID: 6509602699696839511}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Product_Rice
   m_TagString: Untagged
   m_Icon: {fileID: 0}
