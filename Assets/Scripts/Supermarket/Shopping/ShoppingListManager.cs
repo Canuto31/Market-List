@@ -43,6 +43,16 @@ public class ShoppingListManager : MonoBehaviour
 
     private float completionMessageEndTime;
     private GUIStyle completionStyle;
+    
+    [Header("Shopping List Debug UI")]
+    [SerializeField] private bool showShoppingList = true;
+
+    [SerializeField] private float listWidth = 280f;
+    [SerializeField] private float listMargin = 20f;
+    [SerializeField] private float listRowHeight = 30f;
+
+    private GUIStyle listTitleStyle;
+    private GUIStyle listItemStyle;
 
     private IEnumerator Start()
     {
@@ -260,6 +270,8 @@ public class ShoppingListManager : MonoBehaviour
     
     private void OnGUI()
     {
+        DrawShoppingList();
+        
         if (!showCompletionMessage ||
             !listCompleted ||
             Time.unscaledTime >= completionMessageEndTime)
@@ -295,5 +307,85 @@ public class ShoppingListManager : MonoBehaviour
             "¡LISTA DE COMPRAS COMPLETADA!",
             completionStyle
         );
+    }
+    
+    private void DrawShoppingList()
+    {
+        if (!showShoppingList || !listGenerated)
+            return;
+
+        if (listTitleStyle == null)
+        {
+            listTitleStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = 20,
+                fontStyle = FontStyle.Bold
+            };
+
+            listTitleStyle.normal.textColor = Color.white;
+
+            listItemStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = 16
+            };
+
+            listItemStyle.normal.textColor = Color.white;
+        }
+
+        int completed = 0;
+
+        foreach (ShoppingListEntry entry in entries)
+        {
+            if (entry.IsCompleted)
+                completed++;
+        }
+
+        float height = 55f + entries.Count * listRowHeight;
+
+        Rect panelRect = new Rect(
+            Screen.width - listWidth - listMargin,
+            listMargin,
+            listWidth,
+            height
+        );
+
+        GUI.Box(panelRect, "");
+
+        GUI.Label(
+            new Rect(
+                panelRect.x + 10f,
+                panelRect.y + 10f,
+                listWidth - 20f,
+                30f
+            ),
+            $"LISTA DE COMPRAS ({completed}/{entries.Count})",
+            listTitleStyle
+        );
+
+        for (int i = 0; i < entries.Count; i++)
+        {
+            ShoppingListEntry entry = entries[i];
+
+            string marker = entry.IsCompleted ? "[X]" : "[ ]";
+
+            string productName = entry.Product != null
+                ? entry.Product.name
+                : "Producto";
+
+            string label =
+                $"{marker} {productName} " +
+                $"{entry.CollectedQuantity}/{entry.RequiredQuantity}";
+
+            GUI.Label(
+                new Rect(
+                    panelRect.x + 10f,
+                    panelRect.y + 45f + i * listRowHeight,
+                    listWidth - 20f,
+                    listRowHeight
+                ),
+                label,
+                listItemStyle
+            );
+        }
     }
 }

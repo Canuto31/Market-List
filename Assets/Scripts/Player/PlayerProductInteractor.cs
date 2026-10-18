@@ -23,6 +23,8 @@ public class PlayerProductInteractor : MonoBehaviour
     [Header("Shopping Cart")]
     [SerializeField]
     private ShoppingCartController shoppingCart;
+    
+    private SupermarketExit currentExit;
 
     private void Awake()
     {
@@ -92,6 +94,17 @@ public class PlayerProductInteractor : MonoBehaviour
 
     private void UpdateInteractionUI()
     {
+        DetectExit();
+
+        if (currentExit != null && currentExit.CanInteract)
+        {
+            interactionUI.ShowInteraction(
+                currentExit.InteractionPrompt
+            );
+
+            return;
+        }
+        
         if (interactionUI == null)
             return;
 
@@ -115,6 +128,14 @@ public class PlayerProductInteractor : MonoBehaviour
     
     private void HandleInteraction()
     {
+        DetectExit();
+
+        if (currentExit != null && currentExit.CanInteract)
+        {
+            currentExit.Interact();
+            return;
+        }
+        
         DetectProduct();
 
         if (currentProduct == null)
@@ -167,5 +188,28 @@ public class PlayerProductInteractor : MonoBehaviour
             cameraReference.transform.position,
             cameraReference.transform.forward * interactionDistance
         );
+    }
+    
+    private void DetectExit()
+    {
+        currentExit = null;
+
+        if (playerCamera == null)
+            return;
+
+        Ray ray = new Ray(
+            playerCamera.transform.position,
+            playerCamera.transform.forward
+        );
+
+        if (Physics.Raycast(
+                ray,
+                out RaycastHit hit,
+                interactionDistance,
+                interactionLayers))
+        {
+            currentExit =
+                hit.collider.GetComponentInParent<SupermarketExit>();
+        }
     }
 }
