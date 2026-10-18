@@ -95,19 +95,30 @@ public class ShoppingListManager : MonoBehaviour
 
         entries.Clear();
 
+        
+        int remainingCapacity = inventory.MaxCapacity;
+
         int selectedTypes = Mathf.Min(
             maxProductTypes,
-            candidates.Count
+            candidates.Count,
+            remainingCapacity
         );
 
         for (int i = 0; i < selectedTypes; i++)
         {
             ProductDefinition product = candidates[i];
 
+            // Reservamos un espacio para cada tipo de producto pendiente.
+            int reservedForOtherTypes = selectedTypes - i - 1;
+
             int maximumQuantity = Mathf.Min(
                 maxQuantityPerProduct,
-                available[product]
+                available[product],
+                remainingCapacity - reservedForOtherTypes
             );
+
+            if (maximumQuantity < 1)
+                continue;
 
             int requestedQuantity = Random.Range(
                 1,
@@ -120,7 +131,10 @@ public class ShoppingListManager : MonoBehaviour
             );
 
             entries.Add(entry);
+
+            remainingCapacity -= requestedQuantity;
         }
+
 
         listGenerated = true;
         listCompleted = false;
