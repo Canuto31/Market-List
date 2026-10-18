@@ -94,6 +94,9 @@ public class PlayerProductInteractor : MonoBehaviour
 
     private void UpdateInteractionUI()
     {
+        if (interactionUI == null)
+            return;
+        
         DetectExit();
 
         if (currentExit != null && currentExit.CanInteract)
