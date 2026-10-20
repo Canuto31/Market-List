@@ -6,26 +6,28 @@ public class CheckoutCounter : MonoBehaviour
     [SerializeField]
     private bool isAvailable = true;
 
-    [Header("Debug")]
-    [SerializeField]
-    private bool showDebug = true;
-
     public bool CanInteract => isAvailable;
 
     public string InteractionPrompt =>
         isAvailable ? "[E] Pagar compras" : string.Empty;
+    
+    [Header("References")]
+    [SerializeField] private CheckoutProcessor checkoutProcessor;
 
     public void Interact()
     {
         if (!CanInteract)
             return;
 
-        if (showDebug)
+        if (checkoutProcessor == null)
         {
-            Debug.Log(
-                "[CHECKOUT] El jugador interactuó con la caja registradora.",
+            Debug.LogWarning(
+                "[CHECKOUT] CheckoutProcessor not assigned.",
                 this
             );
+            return;
         }
+
+        checkoutProcessor.ProcessCheckout();
     }
 }

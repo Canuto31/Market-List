@@ -38,7 +38,7 @@ public class SupermarketExit : MonoBehaviour
         {
             case GameState.Shopping:
                 Debug.Log(
-                    "[EXIT] Todavía tienes productos pendientes.",
+                    "[EXIT] La puerta no se abre. Algo impide salir...",
                     this
                 );
                 break;

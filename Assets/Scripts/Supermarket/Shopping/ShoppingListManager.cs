@@ -31,9 +31,12 @@ public class ShoppingListManager : MonoBehaviour
 
     public event Action OnListChanged;
     public event Action OnListCompleted;
+    
 
     private bool listGenerated;
     private bool listCompleted;
+    public bool IsListCompleted => listGenerated && listCompleted;
+    public bool HasActiveList => listGenerated && entries.Count > 0;
     
     [Header("Completion Debug")]
     [SerializeField] private bool showCompletionMessage = true;

@@ -3,10 +3,6 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
-    [Header("References")]
-    [SerializeField]
-    private ShoppingListManager shoppingListManager;
-
     [Header("Debug")]
     [SerializeField]
     private bool showDebug = true;
@@ -16,26 +12,11 @@ public class GameManager : MonoBehaviour
 
     public event Action<GameState> OnGameStateChanged;
 
-    private void OnEnable()
+    public void UnlockExit()
     {
-        if (shoppingListManager != null)
-        {
-            shoppingListManager.OnListCompleted +=
-                HandleShoppingCompleted;
-        }
-    }
+        if (CurrentState != GameState.Shopping)
+            return;
 
-    private void OnDisable()
-    {
-        if (shoppingListManager != null)
-        {
-            shoppingListManager.OnListCompleted -=
-                HandleShoppingCompleted;
-        }
-    }
-
-    private void HandleShoppingCompleted()
-    {
         ChangeState(GameState.ExitUnlocked);
     }
 

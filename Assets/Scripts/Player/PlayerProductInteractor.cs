@@ -25,6 +25,7 @@ public class PlayerProductInteractor : MonoBehaviour
     private ShoppingCartController shoppingCart;
     
     private SupermarketExit currentExit;
+    private CheckoutCounter currentCheckout;
 
     private void Awake()
     {
@@ -92,11 +93,23 @@ public class PlayerProductInteractor : MonoBehaviour
         }
     }
 
+    
     private void UpdateInteractionUI()
     {
         if (interactionUI == null)
             return;
-        
+
+        DetectCheckout();
+
+        if (currentCheckout != null && currentCheckout.CanInteract)
+        {
+            interactionUI.ShowInteraction(
+                currentCheckout.InteractionPrompt
+            );
+
+            return;
+        }
+
         DetectExit();
 
         if (currentExit != null && currentExit.CanInteract)
@@ -107,9 +120,6 @@ public class PlayerProductInteractor : MonoBehaviour
 
             return;
         }
-        
-        if (interactionUI == null)
-            return;
 
         if (currentProduct == null ||
             currentProduct.CurrentState == productState.Collected)
@@ -128,9 +138,19 @@ public class PlayerProductInteractor : MonoBehaviour
         }
     }
 
+
+    
     
     private void HandleInteraction()
     {
+        DetectCheckout();
+
+        if (currentCheckout != null && currentCheckout.CanInteract)
+        {
+            currentCheckout.Interact();
+            return;
+        }
+
         DetectExit();
 
         if (currentExit != null && currentExit.CanInteract)
@@ -138,7 +158,7 @@ public class PlayerProductInteractor : MonoBehaviour
             currentExit.Interact();
             return;
         }
-        
+
         DetectProduct();
 
         if (currentProduct == null)
@@ -173,6 +193,7 @@ public class PlayerProductInteractor : MonoBehaviour
             interactionUI?.HideInteraction();
         }
     }
+
 
 
     private void OnDrawGizmosSelected()
@@ -215,4 +236,30 @@ public class PlayerProductInteractor : MonoBehaviour
                 hit.collider.GetComponentInParent<SupermarketExit>();
         }
     }
+    
+    
+    private void DetectCheckout()
+    {
+        currentCheckout = null;
+
+        if (playerCamera == null)
+            return;
+
+        Ray ray = new Ray(
+            playerCamera.transform.position,
+            playerCamera.transform.forward
+        );
+
+        if (Physics.Raycast(
+                ray,
+                out RaycastHit hit,
+                interactionDistance,
+                interactionLayers,
+                QueryTriggerInteraction.Ignore))
+        {
+            currentCheckout =
+                hit.collider.GetComponentInParent<CheckoutCounter>();
+        }
+    }
+
 }
