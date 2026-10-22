@@ -38,6 +38,29 @@ public class ShoppingListManager : MonoBehaviour
     public bool IsListCompleted => listGenerated && listCompleted;
     public bool HasActiveList => listGenerated && entries.Count > 0;
     
+    
+    public Dictionary<ProductDefinition, int> GetRemainingProducts()
+    {
+        Dictionary<ProductDefinition, int> remaining = new();
+
+        foreach (ShoppingListEntry entry in entries)
+        {
+            if (entry.Product == null)
+                continue;
+
+            int missing = Mathf.Max(
+                0,
+                entry.RequiredQuantity - entry.CollectedQuantity
+            );
+
+            if (missing > 0)
+                remaining[entry.Product] = missing;
+        }
+
+        return remaining;
+    }
+
+    
     [Header("Completion Debug")]
     [SerializeField] private bool showCompletionMessage = true;
 
@@ -93,6 +116,17 @@ public class ShoppingListManager : MonoBehaviour
 
         List<ProductDefinition> candidates =
             new(available.Keys);
+        
+        
+        if (candidates.Count == 0)
+        {
+            Debug.LogWarning(
+                "[SHOPPING LIST] No available products to generate a list.",
+                this
+            );
+            return;
+        }
+
 
         Shuffle(candidates);
 
@@ -159,6 +193,67 @@ public class ShoppingListManager : MonoBehaviour
 
         CheckCompletion();
     }
+    
+    public bool ResetAndGenerateShoppingList()
+    {
+        if (inventory == null)
+        {
+            Debug.LogError(
+                "[SHOPPING LIST] Inventory reference missing.",
+                this
+            );
+            return false;
+        }
+
+        if (!listGenerated || !listCompleted)
+        {
+            Debug.LogWarning(
+                "[SHOPPING LIST] Cannot reset an incomplete list.",
+                this
+            );
+            return false;
+        }
+
+        // Evitamos generar una lista nueva mientras
+        // el carrito todavía contiene productos.
+        if (inventory.TotalProducts > 0)
+        {
+            Debug.LogWarning(
+                "[SHOPPING LIST] Cart must be empty before reset.",
+                this
+            );
+            return false;
+        }
+        
+        
+        Dictionary<ProductDefinition, int> availableProducts =
+            CountAvailableProducts();
+
+        if (availableProducts.Count == 0)
+        {
+            Debug.LogError(
+                "[SHOPPING LIST] Cannot generate a new list: " +
+                "there are no available products.",
+                this
+            );
+
+            return false;
+        }
+
+
+        listGenerated = false;
+        listCompleted = false;
+
+        entries.Clear();
+        completionMessageEndTime = 0f;
+
+        OnListChanged?.Invoke();
+
+        GenerateShoppingList();
+
+        return HasActiveList;
+    }
+
 
     private Dictionary<ProductDefinition, int>
         CountAvailableProducts()
@@ -405,4 +500,35 @@ public class ShoppingListManager : MonoBehaviour
             );
         }
     }
+    
+    
+    public Dictionary<ProductDefinition, int> GetAvailableProducts()
+    {
+        return CountAvailableProducts();
+    }
+    
+    
+    public bool HasEnoughProductsForRemainingList()
+    {
+        Dictionary<ProductDefinition, int> remaining =
+            GetRemainingProducts();
+
+        Dictionary<ProductDefinition, int> available =
+            GetAvailableProducts();
+
+        foreach (var item in remaining)
+        {
+            available.TryGetValue(
+                item.Key,
+                out int availableQuantity
+            );
+
+            if (availableQuantity < item.Value)
+                return false;
+        }
+
+        return true;
+    }
+
+
 }

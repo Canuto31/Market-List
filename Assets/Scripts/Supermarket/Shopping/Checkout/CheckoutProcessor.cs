@@ -10,9 +10,14 @@ public class CheckoutProcessor : MonoBehaviour
 
     public event Action OnPurchaseCompleted;
     public event Action OnPurchaseIncomplete;
+    
+    public bool IsProcessing { get; private set; }
 
     public void ProcessCheckout()
     {
+        if (IsProcessing)
+            return;
+        
         if (shoppingList == null || inventory == null)
         {
             Debug.LogError(
@@ -33,6 +38,7 @@ public class CheckoutProcessor : MonoBehaviour
 
         if (shoppingList.IsListCompleted)
         {
+            IsProcessing = true;
             CompletePurchase();
             return;
         }
@@ -47,6 +53,11 @@ public class CheckoutProcessor : MonoBehaviour
             "[CHECKOUT] Todavía tienes productos pendientes.",
             this
         );
+    }
+    
+    public void FinishProcessing()
+    {
+        IsProcessing = false;
     }
 
     private void CompletePurchase()

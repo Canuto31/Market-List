@@ -40,6 +40,7 @@ public class ShelfProductSpawner : MonoBehaviour
         public Vector3 Position;
         public float Width;
         public float Depth;
+        public GameObject ProductObject;
     }
 
     private void Start()
@@ -48,7 +49,6 @@ public class ShelfProductSpawner : MonoBehaviour
             GenerateProducts();
     }
 
-    [ContextMenu("Generate Products")]
     [ContextMenu("Generate Products")]
     public void GenerateProducts()
     {
@@ -65,6 +65,113 @@ public class ShelfProductSpawner : MonoBehaviour
 
         OnGenerationCompleted?.Invoke(this);
     }
+    
+    
+    public void RegenerateProducts()
+    {
+        GenerateProducts();
+    }
+
+    
+    public int ReplenishProduct(
+        ProductDefinition product,
+        int requestedQuantity)
+    {
+        if (product == null || requestedQuantity <= 0)
+            return 0;
+
+        int generated = 0;
+
+        foreach (ShelfSpawnConfiguration configuration in configurations)
+        {
+            if (configuration == null ||
+                configuration.products == null ||
+                configuration.spawnAreas == null ||
+                !configuration.products.Contains(product))
+            {
+                continue;
+            }
+            
+            CleanupOccupiedSpots();
+
+            while (generated < requestedQuantity)
+            {
+                if (!TrySpawnSpecificProduct(configuration, product))
+                    break;
+
+                generated++;
+            }
+
+            if (generated >= requestedQuantity)
+                break;
+        }
+
+        Debug.Log(
+            $"[SHELF] Replenished {generated}/{requestedQuantity} " +
+            $"units of {product.name}.",
+            this
+        );
+
+        return generated;
+    }
+    
+    
+    private bool TrySpawnSpecificProduct(
+        ShelfSpawnConfiguration configuration,
+        ProductDefinition product)
+    {
+        if (configuration.spawnAreas.Count == 0 ||
+            product == null ||
+            product.prefab == null)
+        {
+            return false;
+        }
+
+        // Fase 1: búsqueda aleatoria.
+        for (int attempt = 0;
+             attempt < maxAttemptsPerProduct;
+             attempt++)
+        {
+            ShelfSpawnArea area = GetRandomArea(configuration);
+
+            if (TryPlaceProduct(area, product, null))
+                return true;
+        }
+
+        if (!useAdaptiveSearch)
+            return false;
+
+        // Fase 2: búsqueda adaptativa.
+        List<ShelfSpawnArea> areas =
+            new(configuration.spawnAreas);
+
+        Shuffle(areas);
+
+        foreach (ShelfSpawnArea area in areas)
+        {
+            if (area == null)
+                continue;
+
+            List<Vector3> candidates =
+                area.GetCandidatePositions(
+                    product.width,
+                    product.depth,
+                    candidateStep
+                );
+
+            Shuffle(candidates);
+
+            foreach (Vector3 position in candidates)
+            {
+                if (TryPlaceProduct(area, product, position))
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+
 
     private void GenerateSection(
         ShelfSpawnConfiguration configuration)
@@ -231,11 +338,22 @@ public class ShelfProductSpawner : MonoBehaviour
             Area = area,
             Position = position,
             Width = product.width,
-            Depth = product.depth
+            Depth = product.depth,
+            ProductObject = instance
         });
 
         return true;
     }
+    
+    
+    private void CleanupOccupiedSpots()
+    {
+        occupiedSpots.RemoveAll(spot =>
+            spot.ProductObject == null ||
+            !spot.ProductObject.activeInHierarchy
+        );
+    }
+
 
     private bool IsOccupied(
         ShelfSpawnArea area,
@@ -313,4 +431,44 @@ public class ShelfProductSpawner : MonoBehaviour
         spawnedProducts.Clear();
         occupiedSpots.Clear();
     }
+    
+    
+    public int RemoveAvailableProducts(
+        ProductDefinition product,
+        int maxToRemove)
+    {
+        if (product == null || maxToRemove <= 0)
+            return 0;
+
+        int removed = 0;
+
+        for (int i = spawnedProducts.Count - 1; i >= 0; i--)
+        {
+            GameObject instance = spawnedProducts[i];
+
+            if (instance == null || !instance.activeInHierarchy)
+                continue;
+
+            ProductInstance productInstance =
+                instance.GetComponent<ProductInstance>();
+
+            if (productInstance == null ||
+                productInstance.Definition != product ||
+                productInstance.CurrentState != productState.Available)
+            {
+                continue;
+            }
+
+            instance.SetActive(false);
+            removed++;
+
+            if (removed >= maxToRemove)
+                break;
+        }
+
+        CleanupOccupiedSpots();
+
+        return removed;
+    }
+
 }
